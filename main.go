@@ -197,32 +197,6 @@ func main() {
 
 		templateMutex.Lock()
 		if currentTemplate != nil {
-// 			fmt.Printf(`
-// HashMerkleRoot        : %v
-// AcceptedIDMerkleRoot  : %v
-// UTXOCommitment        : %v
-// Timestamp             : %v
-// Bits                  : %v
-// Nonce                 : %v
-// DAAScore              : %v
-// BlueWork              : %v
-// BlueScore             : %v
-// PruningPoint          : %v
-// Transactions Length   : %v
-// ---------------------------------------
-// `,
-// 				currentTemplate.Block.Header.HashMerkleRoot,
-// 				currentTemplate.Block.Header.AcceptedIDMerkleRoot,
-// 				currentTemplate.Block.Header.UTXOCommitment,
-// 				currentTemplate.Block.Header.Timestamp,
-// 				currentTemplate.Block.Header.Bits,
-// 				currentTemplate.Block.Header.Nonce,
-// 				currentTemplate.Block.Header.DAAScore,
-// 				currentTemplate.Block.Header.BlueWork,
-// 				currentTemplate.Block.Header.BlueScore,
-// 				currentTemplate.Block.Header.PruningPoint,
-// 				len(currentTemplate.Block.Transactions),
-// 			)
 		} else {
 			fmt.Println("No block template fetched yet.")
 		}
