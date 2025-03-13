@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 	// "github.com/joho/godotenv"
@@ -78,6 +79,25 @@ func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, err
 	}
 
 	return address.EncodeAddress(), nil
+}
+
+func ProcessCanxiumAddress(address string) string {
+	// Remove 0x prefix if present
+	if strings.HasPrefix(address, "0x") {
+		address = address[2:]
+	} else if strings.HasPrefix(strings.ToLower(address), "canxiuminer:0x") {
+		// If it has both prefixes, remove the 0x part
+		prefix := address[:len("canxiuminer:")]
+		addressPart := address[len("canxiuminer:0x"):]
+		address = prefix + addressPart
+	}
+
+	// Make sure the address has the canxiuminer: prefix
+	if !strings.HasPrefix(strings.ToLower(address), "canxiuminer:") {
+		address = "canxiuminer:" + address
+	}
+
+	return address
 }
 
 func (ks *KaspaApi) GetBlockTemplate(miningAddr string, canxiumAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
@@ -162,7 +182,7 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksApi.GetBlockTemplate(address, config.CanxiumAddr, config.MinerInfo)
+			template, err := ksApi.GetBlockTemplate(address, ProcessCanxiumAddress(config.CanxiumAddr), config.MinerInfo)
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
 				time.Sleep(ksApi.blockWaitTime)
