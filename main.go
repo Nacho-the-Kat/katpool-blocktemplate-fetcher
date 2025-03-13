@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 	// "github.com/joho/godotenv"
@@ -37,6 +38,7 @@ type BridgeConfig struct {
 	RedisAddress      string   `json:"redis_address"`
 	RedisChannel      string   `json:"redis_channel"`
 	MinerInfo         string   `json:"miner_info"`
+	CanxiumAddr		 string	  `json:"canxiumAddr"`
 }
 
 // NewKaspaAPI creates and returns a new KaspaAPI instance with a configured RPC client.
@@ -84,9 +86,28 @@ func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, err
 }
 
 // GetBlockTemplate fetches a new block template from the Kaspa daemon using the RPC client.
-func (ks *KaspaAPI) GetBlockTemplate(miningAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
+func ProcessCanxiumAddress(address string) string {
+	// Remove 0x prefix if present
+	if strings.HasPrefix(address, "0x") {
+		address = address[2:]
+	} else if strings.HasPrefix(strings.ToLower(address), "canxiuminer:0x") {
+		// If it has both prefixes, remove the 0x part
+		prefix := address[:len("canxiuminer:")]
+		addressPart := address[len("canxiuminer:0x"):]
+		address = prefix + addressPart
+	}
+
+	// Make sure the address has the canxiuminer: prefix
+	if !strings.HasPrefix(strings.ToLower(address), "canxiuminer:") {
+		address = "canxiuminer:" + address
+	}
+
+	return address
+}
+
+func (ks *KaspaAPI) GetBlockTemplate(miningAddr string, canxiumAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
 	template, err := ks.kaspad.GetBlockTemplate(miningAddr,
-		minerInfo)
+		fmt.Sprintf(`Katpool/%s`, canxiumAddr))		
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed fetching new block template from kaspa")
@@ -175,7 +196,7 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksAPI.GetBlockTemplate(address, config.MinerInfo)
+			template, err := ksAPI.GetBlockTemplate(address, ProcessCanxiumAddress(config.CanxiumAddr), config.CanxiumAddr, config.MinerInfo)
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
 				time.Sleep(ksAPI.blockWaitTime)
