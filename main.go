@@ -85,7 +85,6 @@ func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, err
 	return address.EncodeAddress(), nil
 }
 
-// GetBlockTemplate fetches a new block template from the Kaspa daemon using the RPC client.
 func ProcessCanxiumAddress(address string) string {
 	// Remove 0x prefix if present
 	if strings.HasPrefix(address, "0x") {
@@ -105,6 +104,7 @@ func ProcessCanxiumAddress(address string) string {
 	return address
 }
 
+// GetBlockTemplate fetches a new block template from the Kaspa daemon using the RPC client.
 func (ks *KaspaAPI) GetBlockTemplate(miningAddr string, canxiumAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
 	template, err := ks.kaspad.GetBlockTemplate(miningAddr,
 		fmt.Sprintf(`Katpool/%s`, canxiumAddr))		
@@ -196,7 +196,7 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksAPI.GetBlockTemplate(address, ProcessCanxiumAddress(config.CanxiumAddr), config.CanxiumAddr, config.MinerInfo)
+			template, err := ksAPI.GetBlockTemplate(address, ProcessCanxiumAddress(config.CanxiumAddr), ProcessCanxiumAddress(config.CanxiumAddr), config.MinerInfo)
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
 				time.Sleep(ksAPI.blockWaitTime)
