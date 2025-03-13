@@ -34,6 +34,7 @@ type BridgeConfig struct {
 	RedisAddress      string   `json:"redis_address"`
 	RedisChannel      string   `json:"redis_channel"`
 	MinerInfo		  string   `json:"miner_info"`
+	CanxiumAddr		 string	  `json:"canxiumAddr"`
 }
 
 func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaApi, error) {
@@ -79,9 +80,9 @@ func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, err
 	return address.EncodeAddress(), nil
 }
 
-func (ks *KaspaApi) GetBlockTemplate(miningAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
+func (ks *KaspaApi) GetBlockTemplate(miningAddr string, canxiumAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
 	template, err := ks.kaspad.GetBlockTemplate(miningAddr,
-		minerInfo)
+		fmt.Sprintf(`Katpool/%s`, canxiumAddr))		
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed fetching new block template from kaspa")
@@ -161,7 +162,7 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksApi.GetBlockTemplate(address, config.MinerInfo)
+			template, err := ksApi.GetBlockTemplate(address, config.CanxiumAddr, config.MinerInfo)
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
 				time.Sleep(ksApi.blockWaitTime)
