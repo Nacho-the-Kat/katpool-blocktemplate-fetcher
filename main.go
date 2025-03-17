@@ -123,6 +123,14 @@ func main() {
 	// }
 
 	// Step 2: Read environment variables
+	canxiumAddr := os.Getenv("CANXIUM_ADDR") 
+	if canxiumAddr == "" {
+		fmt.Println("Error: CANXIUM_ADDR is not set")
+		os.Exit(1) // Terminate the program with an error code
+	}
+
+	fmt.Println("CANXIUM_ADDR:", canxiumAddr)
+
 	privateKey := os.Getenv("TREASURY_PRIVATE_KEY")
 
 	// Open the JSON file
