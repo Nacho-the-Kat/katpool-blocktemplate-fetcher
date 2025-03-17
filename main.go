@@ -34,7 +34,6 @@ type BridgeConfig struct {
 	BlockWaitTimeSec string   `json:"block_wait_time_seconds"`
 	RedisAddress     string   `json:"redis_address"`
 	RedisChannel     string   `json:"redis_channel"`
-	CanxiumAddr		 string	  `json:"canxiumAddr"`
 }
 
 func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaApi, error) {
@@ -117,6 +116,14 @@ func main() {
 	// }
 
 	// Step 2: Read environment variables
+	canxiumAddr := os.Getenv("CANXIUM_ADDR") 
+	if canxiumAddr == "" {
+		fmt.Println("Error: CANXIUM_ADDR is not set")
+		os.Exit(1) // Terminate the program with an error code
+	}
+
+	fmt.Println("CANXIUM_ADDR:", canxiumAddr)
+
 	privateKey := os.Getenv("TREASURY_PRIVATE_KEY")
 
 	// Open the JSON file
@@ -181,7 +188,7 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksApi.GetBlockTemplate(address, ProcessCanxiumAddress(config.CanxiumAddr))
+			template, err := ksApi.GetBlockTemplate(address, ProcessCanxiumAddress(canxiumAddr))
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
 				time.Sleep(ksApi.blockWaitTime)
