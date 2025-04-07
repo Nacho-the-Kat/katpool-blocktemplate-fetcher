@@ -3,5 +3,6 @@
     "network": "mainnet",
     "block_wait_time_seconds": "3",
     "redis_address": "redis:6379",
-    "redis_channel": "NewBlockTemplateChannel"
+    "redis_channel": "NewBlockTemplateChannel",
+    "miner_info":"Katpool"
 }
