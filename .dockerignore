@@ -1,0 +1,10 @@
+# Version control
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+
+# Binary/build output
+getNewBlockTemplate
