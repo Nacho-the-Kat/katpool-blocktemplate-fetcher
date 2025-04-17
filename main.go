@@ -145,9 +145,9 @@ func main() {
 
 	rpcUrl := "kaspad:16110"
 	if config.Network == "testnet-10" {	
-		rpcUrl = "kaspad:16210"
+		rpcUrl = "kaspad-test10:16210"
 	} else if config.Network == "testnet-11" {
-		rpcUrl = "kaspad:16310"
+		rpcUrl = "kaspad-test11:16310"
 	}
 
 	ksApi, err := NewKaspaAPI(rpcUrl, time.Duration(num)*time.Second)
