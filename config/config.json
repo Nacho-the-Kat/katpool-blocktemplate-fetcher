@@ -1,7 +1,7 @@
 {
     "node" : [""],
     "network": "mainnet",
-    "block_wait_time_seconds": "3",
+    "block_wait_time_milliseconds": "1000",
     "redis_address": "redis:6379",
     "redis_channel": "NewBlockTemplateChannel",
     "miner_info":"Katpool"
