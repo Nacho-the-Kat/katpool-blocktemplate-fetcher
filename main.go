@@ -150,7 +150,7 @@ func main() {
 		rpcUrl = "kaspad-test11:16310"
 	}
 
-	ksApi, err := NewKaspaAPI(rpcUrl, time.Duration(num)*time.Second)
+	ksApi, err := NewKaspaAPI(rpcUrl, time.Duration(num)*time.Millisecond)
 	if err != nil {
 		log.Fatalf("failed to initialize Kaspa API: %v", err)
 	}
