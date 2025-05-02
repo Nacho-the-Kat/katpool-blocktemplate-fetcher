@@ -28,12 +28,12 @@ type KaspaApi struct {
 }
 
 type BridgeConfig struct {
-	RPCServer        []string `json:"node"`
-	Network 		 string   `json:"network"`
-	BlockWaitTimeSec string   `json:"block_wait_time_seconds"`
-	RedisAddress     string   `json:"redis_address"`
-	RedisChannel     string   `json:"redis_channel"`
-	MinerInfo		 string   `json:"miner_info"`
+	RPCServer         []string `json:"node"`
+	Network 		  string   `json:"network"`
+	BlockWaitTimeMSec string   `json:"block_wait_time_milliseconds"`
+	RedisAddress      string   `json:"redis_address"`
+	RedisChannel      string   `json:"redis_channel"`
+	MinerInfo		  string   `json:"miner_info"`
 }
 
 func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaApi, error) {
@@ -137,9 +137,9 @@ func main() {
 	}
 
 	// Initialize Kaspa API
-	num, err := strconv.Atoi(config.BlockWaitTimeSec)
+	num, err := strconv.Atoi(config.BlockWaitTimeMSec)
 	if err != nil {
-		fmt.Println("Error: Invalid BlockWaitTimeSec : ", err)
+		fmt.Println("Error: Invalid BlockWaitTimeMSec : ", err)
 		return
 	}
 
