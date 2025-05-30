@@ -38,7 +38,6 @@ type BridgeConfig struct {
 	RedisAddress      string   `json:"redis_address"`
 	RedisChannel      string   `json:"redis_channel"`
 	MinerInfo         string   `json:"miner_info"`
-	CanxiumAddr		 string	  `json:"canxiumAddr"`
 }
 
 // NewKaspaAPI creates and returns a new KaspaAPI instance with a configured RPC client.
@@ -204,7 +203,7 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksAPI.GetBlockTemplate(address, ProcessCanxiumAddress(config.CanxiumAddr), ProcessCanxiumAddress(config.CanxiumAddr), config.MinerInfo)
+			template, err := ksAPI.GetBlockTemplate(address, ProcessCanxiumAddress(canxiumAddr), config.MinerInfo)
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
 				time.Sleep(ksAPI.blockWaitTime)
