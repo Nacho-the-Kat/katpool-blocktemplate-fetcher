@@ -20,29 +20,32 @@ import (
 	"golang.org/x/net/context"
 )
 
-type KaspaApi struct {
+// KaspaAPI provides access to the Kaspa RPC client and manages block template requests.
+type KaspaAPI struct {
 	address       string
 	blockWaitTime time.Duration
 	kaspad        *rpcclient.RPCClient
 	connected     bool
 }
 
+// BridgeConfig represents the configuration settings used to connect to Kaspa and Redis.
 type BridgeConfig struct {
 	RPCServer         []string `json:"node"`
-	Network 		  string   `json:"network"`
+	Network           string   `json:"network"`
 	BlockWaitTimeMSec string   `json:"block_wait_time_milliseconds"`
 	RedisAddress      string   `json:"redis_address"`
 	RedisChannel      string   `json:"redis_channel"`
-	MinerInfo		  string   `json:"miner_info"`
+	MinerInfo         string   `json:"miner_info"`
 }
 
-func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaApi, error) {
+// NewKaspaAPI creates and returns a new KaspaAPI instance with a configured RPC client.
+func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaAPI, error) {
 	client, err := rpcclient.NewRPCClient(address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &KaspaApi{
+	return &KaspaAPI{
 		address:       address,
 		blockWaitTime: blockWaitTime,
 		kaspad:        client,
@@ -52,7 +55,7 @@ func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaApi, error)
 
 func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, error) {
 	prefix := util.Bech32PrefixKaspa
-	if network == "testnet-10" || network == "testnet-11"{
+	if network == "testnet-10" || network == "testnet-11" {
 		prefix = util.Bech32PrefixKaspaTest
 	}
 
@@ -79,7 +82,8 @@ func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, err
 	return address.EncodeAddress(), nil
 }
 
-func (ks *KaspaApi) GetBlockTemplate(miningAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
+// GetBlockTemplate fetches a new block template from the Kaspa daemon using the RPC client.
+func (ks *KaspaAPI) GetBlockTemplate(miningAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
 	template, err := ks.kaspad.GetBlockTemplate(miningAddr,
 		minerInfo)
 
@@ -105,7 +109,11 @@ func main() {
 		fmt.Printf("Error opening file: %v\n", err)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("Error closing config file: %v", err)
+		}
+	}()
 
 	// Decode JSON into the struct
 	var config BridgeConfig
@@ -115,20 +123,24 @@ func main() {
 		fmt.Printf("Error decoding JSON: %v\n", err)
 		return
 	}
-	log.Println("Config : %v", config)
+	log.Printf("Config : %v\n", config)
 
 	address, err := fetchKaspaAccountFromPrivateKey(config.Network, privateKey)
 	if err != nil {
 		log.Fatalf("failed to retrieve address from private key : %v", err)
 	}
-	log.Println("Address : ", address)
+	log.Printf("Address : %v\n", address)
 
 	// Initialize Redis client
 	ctx := context.Background()
 	rdb := redis.NewClient(&redis.Options{
 		Addr: config.RedisAddress,
 	})
-	defer rdb.Close()
+	defer func() {
+		if err := rdb.Close(); err != nil {
+			log.Printf("Error closing Redis client: %v", err)
+		}
+	}()
 
 	// Test Redis connection
 	_, err = rdb.Ping(ctx).Result()
@@ -143,14 +155,17 @@ func main() {
 		return
 	}
 
-	rpcUrl := "kaspad:16110"
-	if config.Network == "testnet-10" {	
-		rpcUrl = "kaspad-test10:16210"
-	} else if config.Network == "testnet-11" {
-		rpcUrl = "kaspad-test11:16310"
+	var rpcURL string
+	switch config.Network {
+	case "testnet-10":
+		rpcURL = "kaspad-test10:16210"
+	case "testnet-11":
+		rpcURL = "kaspad-test11:16310"
+	default:
+		rpcURL = "kaspad:16110"
 	}
 
-	ksApi, err := NewKaspaAPI(rpcUrl, time.Duration(num)*time.Millisecond)
+	ksAPI, err := NewKaspaAPI(rpcURL, time.Duration(num)*time.Millisecond)
 	if err != nil {
 		log.Fatalf("failed to initialize Kaspa API: %v", err)
 	}
@@ -161,10 +176,10 @@ func main() {
 	// Start a goroutine to continuously fetch block templates and publish them to Redis
 	go func() {
 		for {
-			template, err := ksApi.GetBlockTemplate(address, config.MinerInfo)
+			template, err := ksAPI.GetBlockTemplate(address, config.MinerInfo)
 			if err != nil {
 				log.Printf("error fetching block template: %v", err)
-				time.Sleep(ksApi.blockWaitTime)
+				time.Sleep(ksAPI.blockWaitTime)
 				continue
 			}
 
@@ -188,7 +203,7 @@ func main() {
 				log.Printf("template published to Redis channel %s", config.RedisChannel)
 			}
 
-			time.Sleep(ksApi.blockWaitTime)
+			time.Sleep(ksAPI.blockWaitTime)
 		}
 	}()
 
