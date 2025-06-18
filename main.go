@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"sync"
@@ -204,6 +205,71 @@ func main() {
 			}
 
 			time.Sleep(ksAPI.blockWaitTime)
+		}
+	}()
+
+	go func() {
+		type HealthResponse struct {
+			Status   string            `json:"status"`
+			Services map[string]string `json:"services"`
+		}
+
+		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+			services := map[string]string{}
+			status := "ok"
+
+			// Redis check
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						services["redis"] = "fail"
+						status = "fail"
+					}
+				}()
+
+				if _, err := rdb.Ping(ctx).Result(); err != nil {
+					services["redis"] = "fail"
+					status = "fail"
+				} else {
+					services["redis"] = "ok"
+				}
+			}()
+
+			// Kaspa RPC check
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						services["kaspa_rpc"] = "fail"
+						status = "fail"
+					}
+				}()
+
+				if _, err := ksAPI.GetBlockTemplate(address, config.MinerInfo); err != nil {
+					services["kaspa_rpc"] = "fail"
+					status = "fail"
+				} else {
+					services["kaspa_rpc"] = "ok"
+				}
+			}()
+
+			// Respond
+			resp := HealthResponse{
+				Status:   status,
+				Services: services,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			if status == "fail" {
+				w.WriteHeader(http.StatusServiceUnavailable)
+			} else {
+				w.WriteHeader(http.StatusOK)
+			}
+			_ = json.NewEncoder(w).Encode(resp)
+		})
+
+		log.Println("Health check endpoint started on :8080")
+		if err := http.ListenAndServe(":8080", nil); err != nil {
+			log.Fatalf("Failed to start health server: %v", err)
 		}
 	}()
 
