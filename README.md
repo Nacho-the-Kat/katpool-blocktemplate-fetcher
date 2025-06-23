@@ -49,6 +49,33 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+### Installing Go Linters and Formatters
+
+Some pre-commit hooks require Go tools to be installed and on your PATH. Run these commands to install them:
+
+1. goimports is part of golang.org/x/tools
+
+```bash
+go install golang.org/x/tools/cmd/goimports@latest
+```
+
+2. golint is part of golang.org/x/lint
+```bash
+go install golang.org/x/lint/golint@latest
+```
+
+3. Ensure $GOPATH/bin is on your PATH
+
+```bash
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
+4. Verify installation
+```bash
+which goimports
+which golint
+```
+
 ### Troubleshooting Pre-commit
 
 If a commit fails due to pre-commit hooks:
