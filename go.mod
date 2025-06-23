@@ -19,7 +19,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/jrick/logrotate v1.0.0 // indirect
 	github.com/kaspanet/go-muhash v0.0.4 // indirect
 	github.com/kaspanet/go-secp256k1 v0.0.7 // indirect
