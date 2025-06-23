@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"github.com/go-redis/redis/v8"
 	// "github.com/joho/godotenv"
@@ -84,6 +84,8 @@ func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, err
 	return address.EncodeAddress(), nil
 }
 
+// ProcessCanxiumAddress normalizes a Canxium address string by ensuring it has the "canxiuminer:" prefix
+// and removing any "0x" prefix as needed.
 func ProcessCanxiumAddress(address string) string {
 	// Remove 0x prefix if present
 	if strings.HasPrefix(address, "0x") {
@@ -106,7 +108,7 @@ func ProcessCanxiumAddress(address string) string {
 // GetBlockTemplate fetches a new block template from the Kaspa daemon using the RPC client.
 func (ks *KaspaAPI) GetBlockTemplate(miningAddr string, canxiumAddr string, minerInfo string) (*appmessage.GetBlockTemplateResponseMessage, error) {
 	template, err := ks.kaspad.GetBlockTemplate(miningAddr,
-		fmt.Sprintf(`Katpool/%s`, canxiumAddr))		
+		fmt.Sprintf(`Katpool/%s`, canxiumAddr))
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed fetching new block template from kaspa")
@@ -122,7 +124,7 @@ func main() {
 	// }
 
 	// Step 2: Read environment variables
-	canxiumAddr := os.Getenv("CANXIUM_ADDR") 
+	canxiumAddr := os.Getenv("CANXIUM_ADDR")
 	if canxiumAddr == "" {
 		fmt.Println("Error: CANXIUM_ADDR is not set")
 		os.Exit(1) // Terminate the program with an error code
@@ -270,7 +272,7 @@ func main() {
 					}
 				}()
 
-				if _, err := ksAPI.GetBlockTemplate(address, config.MinerInfo); err != nil {
+				if _, err := ksAPI.GetBlockTemplate(address, ProcessCanxiumAddress(canxiumAddr), config.MinerInfo); err != nil {
 					services["kaspa_rpc"] = "fail"
 					status = "fail"
 				} else {
