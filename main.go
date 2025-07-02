@@ -56,7 +56,7 @@ func NewKaspaAPI(address string, blockWaitTime time.Duration) (*KaspaAPI, error)
 
 func fetchKaspaAccountFromPrivateKey(network, privateKeyHex string) (string, error) {
 	prefix := util.Bech32PrefixKaspa
-	if network == "testnet-10" || network == "testnet-11" {
+	if network == "testnet-10" {
 		prefix = util.Bech32PrefixKaspaTest
 	}
 
@@ -160,8 +160,6 @@ func main() {
 	switch config.Network {
 	case "testnet-10":
 		rpcURL = "kaspad-test10:16210"
-	case "testnet-11":
-		rpcURL = "kaspad-test11:16310"
 	default:
 		rpcURL = "kaspad:16110"
 	}
